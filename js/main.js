@@ -10,7 +10,7 @@ var MESSAGES = [
 ];
 
 var NAMES = ['Андрей', 'Татьяна', 'Николай', 'Константин', 'Анастасия', 'Мария'];
-var IMG_COUNT = 6;
+var IMG_COUNT = 5;
 var MAX_COMMENTS = 5;
 var POSTS_COUNT = 25;
 
@@ -25,8 +25,8 @@ var getRandomComments = function (max) {
 
   for (var i = 0; i <= getRandom(1, max); i++) {
     var comment = {
-      avatar: 'img/avatar-' + getRandom(0, IMG_COUNT) + '.svg',
-      message: MESSAGES[getRandom(0, NAMES.length - 1)],
+      avatar: 'img/avatar-' + getRandom(1, IMG_COUNT) + '.svg',
+      message: MESSAGES[getRandom(0, MESSAGES.length - 1)],
       name: NAMES[getRandom(0, NAMES.length - 1)]
     };
     arr.push(comment);
@@ -60,7 +60,7 @@ var buildPicture = function (data) {
   var like = picture.querySelector('.picture__likes');
   var comments = picture.querySelector('.picture__comments');
 
-  img.src = '' + data.url;
+  img.src = data.url;
   like.textContent = data.likes;
   comments.textContent = data.comments.length;
 
@@ -73,3 +73,59 @@ posts.forEach(function (item) {
 });
 
 pictureContainer.append(fragment);
+
+var bigPicture = document.querySelector('.big-picture');
+var bigImg = bigPicture.querySelector('.big-picture__img img');
+var bigLike = bigPicture.querySelector('.likes-count');
+var bigComment = bigPicture.querySelector('.comments-count');
+var bigSocial = bigPicture.querySelector('.social__comments');
+var bigCaption = bigPicture.querySelector('.social__caption');
+
+var commentCount = bigPicture.querySelector('.social__comment-count');
+var commentLoader = bigPicture.querySelector('.comments-loader');
+
+
+var createComment = function (data) {
+  var item = document.createElement('li');
+  var img = document.createElement('img');
+  var paragraph = document.createElement('p');
+
+  item.classList.add('social__comment');
+
+  img.classList.add('social__picture');
+  img.src = data.avatar;
+  img.alt = data.name;
+  img.width = 35;
+  img.height = 35;
+
+  paragraph.classList.add('social__text');
+  paragraph.textContent = data.message;
+
+  item.append(img);
+  item.append(paragraph);
+
+  return item;
+};
+
+var showBigPicture = function (data) {
+  bigImg.src = data.url;
+  bigCaption.textContent = data.description;
+  bigLike.textContent = data.likes;
+  bigComment.textContent = data.comments.length;
+  bigSocial.innerHTML = '';
+
+  data.comments.forEach(function (comment) {
+    var item = createComment(comment);
+
+    bigSocial.append(item);
+  });
+
+  commentCount.classList.add('hidden');
+  commentLoader.classList.add('hidden');
+
+  bigPicture.classList.remove('hidden');
+};
+
+showBigPicture(posts[0]);
+
+document.body.classList.add('modal-open');
