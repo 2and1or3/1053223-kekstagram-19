@@ -16,6 +16,7 @@ var POSTS_COUNT = 25;
 var DEFAULT_LEVEL = 100;
 var EFFECT_PREVIEW = 'effects__preview--';
 var ESC = 'Escape';
+var DEFAULT_SETED = 'effects__preview--none';
 
 // var TAGS_LIMIT = 5;
 // var MIN_TAG_LENGTH = 1;
@@ -74,8 +75,11 @@ var buildPicture = function (data) {
   return picture;
 };
 
-posts.forEach(function (item) {
+posts.forEach(function (item, index) {
   var picture = buildPicture(item);
+
+  picture.setAttribute('data-id', index);
+
   fragment.append(picture);
 });
 
@@ -87,6 +91,7 @@ var bigLike = bigPicture.querySelector('.likes-count');
 var bigComment = bigPicture.querySelector('.comments-count');
 var bigSocial = bigPicture.querySelector('.social__comments');
 var bigCaption = bigPicture.querySelector('.social__caption');
+var bigImgClose = bigPicture.querySelector('.cancel');
 
 var commentCount = bigPicture.querySelector('.social__comment-count');
 var commentLoader = bigPicture.querySelector('.comments-loader');
@@ -130,38 +135,64 @@ var showBigPicture = function (data) {
   commentCount.classList.add('hidden');
   commentLoader.classList.add('hidden');
 
-  // bigPicture.classList.remove('hidden');
+  popupOpen(bigPicture);
 };
 
-showBigPicture(posts[0]);
+pictureContainer.addEventListener('click', function (evt) {
+  var pic = evt.target.closest('.picture');
 
-document.body.classList.add('modal-open');
+  if (pic) {
+    showBigPicture(posts[pic.getAttribute('data-id')]);
+  }
+});
+
+bigImgClose.addEventListener('click', function () {
+  popupClose();
+});
 
 var uploadInput = document.querySelector('#upload-file');
 var imgRedactor = document.querySelector('.img-upload__overlay');
 var closeRedactor = imgRedactor.querySelector('#upload-cancel');
 
 var onEscPress = function (evt) {
-  if (evt.key === ESC) {
+  if (evt.key === ESC && !isFocused()) {
     popupClose();
   }
 };
 
-var popupOpen = function () {
-  imgRedactor.classList.remove('hidden');
+var popupOpen = function (elem) {
+  elem.classList.remove('hidden');
+  elem.classList.add('js-open');
+  document.body.classList.add('modal-open');
   document.addEventListener('keydown', onEscPress);
 };
 
 var popupClose = function () {
-  imgRedactor.classList.add('hidden');
-  uploadInput.value = '';
+  var opened = document.querySelector('.js-open');
+
+  if (opened === imgRedactor) {
+    resetRedactor();
+  }
+
+  opened.classList.add('hidden');
+  opened.classList.remove('js-open');
+  document.body.classList.remove('modal-open');
   document.removeEventListener('keydown', onEscPress);
 };
 
-uploadInput.addEventListener('change', popupOpen);
+uploadInput.addEventListener('change', function () {
+  popupOpen(imgRedactor);
+});
 
-closeRedactor.addEventListener('click', popupClose);
+closeRedactor.addEventListener('click', function () {
+  popupClose();
+});
 
+var resetRedactor = function () {
+  uploadInput.value = '';
+  setEffect(DEFAULT_SETED);
+  effectsContainer.elements[0].checked = true;
+};
 
 var rangeControl = imgRedactor.querySelector('.effect-level__pin');
 var effectLevelValue = imgRedactor.querySelector('.effect-level__value');
@@ -178,18 +209,14 @@ var setLevelEffect = function (percent) {
   effectLevelValue.value = percent;
 };
 
-var seted = null;
+var seted = DEFAULT_SETED;
 
 var setEffect = function (effect) {
   effect = EFFECT_PREVIEW + effect.slice(7);
-  if (!seted) {
-    seted = effect;
-    imgPreview.classList.add(seted);
-  } else {
-    imgPreview.classList.remove(seted);
-    seted = effect;
-    imgPreview.classList.add(seted);
-  }
+
+  imgPreview.classList.remove(seted);
+  seted = effect;
+  imgPreview.classList.add(seted);
 };
 
 rangeControl.addEventListener('mouseup', function () {
@@ -202,9 +229,40 @@ effectsContainer.addEventListener('change', function () {
   setLevelEffect(DEFAULT_LEVEL);
 });
 
-// var hashContainer = imgRedactor.querySelector('.text__hashtags');
-//
-// hashContainer.addEventListener('change', function () {
+
+var isFocused = function () {
+  var opened = document.querySelector('.js-open');
+  var form = opened.closest('form') || opened.querySelector('form');
+
+  if (form) {
+    var arr = Array.from(form.elements);
+    var filtered = arr.filter(function (elem) {
+      return elem.matches('input:not([type=hidden])') &&
+             elem.matches('input:not([type=radio])') &&
+             elem.matches('input:not([type=checkbox])') &&
+             elem.matches('input:not([type=file])') &&
+             elem.matches('input:not([type=submit])') &&
+             elem.matches('input:not([type=reset])') &&
+             elem.matches('input:not([type=button])') &&
+             elem.matches('input:not([type=number])') &&
+             elem.matches('input:not([disabled])') &&
+             elem.matches('input:not([readonly])') ||
+
+             elem.matches('textarea');
+    });
+
+    return filtered.some(function (elem) {
+      return elem.matches(':focus');
+    });
+  }
+
+  return false;
+};
+
+// var hashInput = imgRedactor.querySelector('.text__hashtags');
+// var commentInput = imgRedactor.querySelector('.text__description');
+
+// hashInput.addEventListener('change', function () {
 //   var hashtags = this.value.split(' ');
 //
 //   var validTags = hashtags.filter(function (hash, index, arr) {
@@ -215,17 +273,17 @@ effectsContainer.addEventListener('change', function () {
 //     var isInLimits = MIN_TAG_LENGTH < hash.length && hash.length <= MAX_TAG_LENGTH;// хеш-тег не может состоять только из одной решётки //максимальная длина одного хэш-тега 20 символов, включая решётку
 //
 //     if (isRepeat) {
-//       hashContainer.setCustomValidity('один и тот же хэш-тег не может быть использован дважды');
+//       hashInput.setCustomValidity('один и тот же хэш-тег не может быть использован дважды');
 //     } else if (!isBeginWithHash) {
-//       hashContainer.setCustomValidity('хэш-тег начинается с символа # (решётка)');
+//       hashInput.setCustomValidity('хэш-тег начинается с символа # (решётка)');
 //     } else if (!isInLimits) {
-//       hashContainer.setCustomValidity('хеш-тег должен быть длинной от: ' + MIN_TAG_LENGTH + ' до: ' + MAX_TAG_LENGTH + ' символов включительно');
+//       hashInput.setCustomValidity('хеш-тег должен быть длинной от: ' + MIN_TAG_LENGTH + ' до: ' + MAX_TAG_LENGTH + ' символов включительно');
 //     }
 //
 //     return isBeginWithHash && isInLimits && !isRepeat;
 //   });
 //
 //   if (validTags > TAGS_LIMIT) { // нельзя указать больше пяти хэш-тегов;
-//     hashContainer.setCustomValidity('нельзя указать больше ' + TAGS_LIMIT + 'хэш-тегов');
+//     hashInput.setCustomValidity('нельзя указать больше ' + TAGS_LIMIT + 'хэш-тегов');
 //   }
 // });
