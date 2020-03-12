@@ -14,6 +14,32 @@
   var imgRedactor = document.querySelector('.img-upload__overlay');
   var closeRedactor = imgRedactor.querySelector('#upload-cancel');
 
+  var filtersMap = {
+    none: function () {
+      return 'none';
+    },
+    chrome: function (percent) {
+      var value = Math.round(percent) / 100;
+      return 'grayscale(' + value + ')';
+    },
+    sepia: function (percent) {
+      var value = Math.round(percent) / 100;
+      return 'sepia(' + value + ')';
+    },
+    marvin: function (percent) {
+      var value = Math.round(percent);
+      return 'invert(' + value + '%)';
+    },
+    phobos: function (percent) {
+      var value = Math.round(percent * 0.03);
+      return 'blur(' + value + 'px)';
+    },
+    heat: function (percent) {
+      var value = Math.round(percent * 0.02) + 1;
+      return 'brightness(' + value + ')';
+    }
+  };
+
   uploadInput.addEventListener('change', function () {
     window.modal.open(imgRedactor);
   });
@@ -26,41 +52,70 @@
     uploadInput.value = '';
     setEffect(DEFAULT_SETED);
     effectsContainer.elements[0].checked = true;
+    selected = effectsContainer.elements[0];
   };
 
   var rangeControl = imgRedactor.querySelector('.effect-level__pin');
   var effectLevelValue = imgRedactor.querySelector('.effect-level__value');
+  var effectDepth = imgRedactor.querySelector('.effect-level__depth');
 
   var effectsContainer = imgRedactor.querySelector('.effects');
 
   var imgPreview = imgRedactor.querySelector('.img-upload__preview img');
 
-  var getPercent = function (child) {
-    return Math.round((child.offsetLeft / child.offsetParent.offsetWidth) * 100);
+  var getPercent = function (child, shift) {
+    return ((child.offsetLeft + shift) / child.offsetParent.offsetWidth) * 100;
   };
 
   var setLevelEffect = function (percent) {
-    effectLevelValue.value = percent;
+    effectLevelValue.value = Math.round(percent);
+    imgPreview.style.filter = filtersMap[selected.value](percent);
   };
 
   var seted = DEFAULT_SETED;
 
   var setEffect = function (effect) {
-    effect = EFFECT_PREVIEW + effect.slice(7);
+    effect = EFFECT_PREVIEW + effect;
 
     imgPreview.classList.remove(seted);
     seted = effect;
     imgPreview.classList.add(seted);
   };
 
-  rangeControl.addEventListener('mouseup', function () {
-    setLevelEffect(getPercent(rangeControl));
-  });
+  var selected = effectsContainer.querySelector('input:checked');
 
   effectsContainer.addEventListener('change', function () {
-    var selected = effectsContainer.querySelector('input:checked');
-    setEffect(selected.id);
+    selected = effectsContainer.querySelector('input:checked');
+    setEffect(selected.value);
     setLevelEffect(DEFAULT_LEVEL);
+  });
+
+
+  rangeControl.addEventListener('mousedown', function (evt) {
+    var startX = evt.clientX;
+
+    var onMouseMove = function (moveEvt) {
+      var shift = moveEvt.clientX - startX;
+      var percent = getPercent(rangeControl, shift);
+
+
+      if (percent >= 0 && percent <= 100) {
+        rangeControl.style.left = percent + '%';
+        effectDepth.style.width = percent + '%';
+        setLevelEffect(percent);
+        startX += shift;
+      }
+
+    };
+
+    var onMouseUp = function () {
+      document.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+
+    window.addEventListener('mouseup', onMouseUp);
   });
 
 
