@@ -26,7 +26,7 @@
     pictureContainer.append(fragment);
   };
 
-  window.backend(onSuccessLoad, onErrorLoad);
+  window.backend.load(onSuccessLoad, onErrorLoad);
 
   pictureContainer.addEventListener('click', function (evt) {
     var pic = evt.target.closest('.picture');

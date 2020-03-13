@@ -3,20 +3,17 @@
 (function () {
   var ESC = 'Escape';
 
-  var onEscPress = function (evt) {
-    if (evt.key === ESC && !isFocused()) {
-      popupClose();
-    }
+  var escPress = function (cb) {
+    return function (evt) {
+      if (evt.key === ESC && !isFocused()) {
+        cb();
+      }
+    };
   };
 
-  var popupOpen = function (elem) {
-    elem.classList.remove('hidden');
-    elem.classList.add('js-open');
-    document.body.classList.add('modal-open');
-    document.addEventListener('keydown', onEscPress);
-  };
+  var onEscPress = escPress(popupClose);
 
-  var popupClose = function () {
+  function popupClose() {
     var opened = document.querySelector('.js-open');
 
     if (opened === window.form.imgRedactor) {
@@ -27,11 +24,21 @@
     opened.classList.remove('js-open');
     document.body.classList.remove('modal-open');
     document.removeEventListener('keydown', onEscPress);
+  }
+
+
+  var popupOpen = function (elem) {
+    elem.classList.remove('hidden');
+    elem.classList.add('js-open');
+    document.body.classList.add('modal-open');
+    document.addEventListener('keydown', onEscPress);
   };
 
   var isFocused = function () {
     var opened = document.querySelector('.js-open');
-    var form = opened.closest('form') || opened.querySelector('form');
+    if (opened) {
+      var form = opened.closest('form') || opened.querySelector('form');
+    }
 
     if (form) {
       var arr = Array.from(form.elements);
@@ -60,6 +67,7 @@
 
   window.modal = {
     open: popupOpen,
-    close: popupClose
+    close: popupClose,
+    escPress: escPress
   };
 })();

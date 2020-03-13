@@ -1,16 +1,18 @@
 'use strict';
 
 (function () {
-  var URL = 'https://js.dump.academy/kekstagram/data';
+  var GET_URL = 'https://js.dump.academy/kekstagram/data';
+  var POST_URL = 'https://js.dump.academy/kekstagram';
   var TIMEOUT = 5000;
+  var OK = 200;
 
-  var load = function (onSuccess, onError) {
+  var makeRequest = function (onSuccess, onError) {
     var xhr = new XMLHttpRequest();
 
     xhr.responseType = 'json';
 
     xhr.addEventListener('load', function () {
-      if (xhr.status === 200) {
+      if (xhr.status === OK) {
         onSuccess(xhr.response);
       } else {
         onError('Произошла ошибка сервера:' + xhr.status + xhr.statusText);
@@ -26,10 +28,25 @@
     });
 
     xhr.timeout = TIMEOUT;
-
-    xhr.open('GET', URL);
-    xhr.send();
+    return xhr;
   };
 
-  window.backend = load;
+  var load = function (onSuccess, onError) {
+    var request = makeRequest(onSuccess, onError);
+
+    request.open('GET', GET_URL);
+    request.send();
+  };
+
+  var upload = function (data, onError, onSuccess) {
+    var request = makeRequest(onSuccess, onError);
+
+    request.open('POST', POST_URL);
+    request.send(data);
+  };
+
+  window.backend = {
+    load: load,
+    save: upload
+  };
 })();

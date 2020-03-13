@@ -14,6 +14,7 @@
   var imgRedactor = document.querySelector('.img-upload__overlay');
   var closeRedactor = imgRedactor.querySelector('#upload-cancel');
 
+
   var filtersMap = {
     none: function () {
       return 'none';
@@ -119,6 +120,49 @@
     document.addEventListener('mousemove', onMouseMove);
 
     window.addEventListener('mouseup', onMouseUp);
+  });
+
+
+  var main = document.querySelector('main');
+
+  var createMessageTemplate = function (type) {
+    var template = document.querySelector('#' + type)
+        .content.querySelector('.' + type);
+    var message = template.cloneNode(true);
+
+    main.append(message);
+
+    var messageClose = function () {
+      message.remove();
+      document.removeEventListener('click', onButtonClick);
+      document.removeEventListener('keydown', onEscPress);
+    };
+
+    var onButtonClick = function () {
+      messageClose();
+    };
+
+    var onEscPress = window.modal.escPress(messageClose);
+
+    document.addEventListener('click', onButtonClick);
+    document.addEventListener('keydown', onEscPress);
+  };
+
+  var onSuccessSend = function () {
+    createMessageTemplate('success');
+  };
+
+  var onErrorSend = function () {
+    createMessageTemplate('error');
+  };
+
+  var form = document.querySelector('.img-upload__form');
+
+  form.addEventListener('submit', function (evt) {
+    evt.preventDefault();
+
+    window.backend.save(new FormData(form), onSuccessSend, onErrorSend);
+    window.modal.close();
   });
 
 
