@@ -92,9 +92,11 @@
 
 
   rangeControl.addEventListener('mousedown', function (evt) {
+    evt.preventDefault();
     var startX = evt.clientX;
 
     var onMouseMove = function (moveEvt) {
+      moveEvt.preventDefault();
       var shift = moveEvt.clientX - startX;
       var percent = getPercent(rangeControl, shift);
 
@@ -108,7 +110,8 @@
 
     };
 
-    var onMouseUp = function () {
+    var onMouseUp = function (upEvt) {
+      upEvt.preventDefault();
       document.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
     };
