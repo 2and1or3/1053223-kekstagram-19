@@ -2,8 +2,37 @@
 
 (function () {
   var pictureContainer = document.querySelector('.pictures');
-  var fragment = document.createDocumentFragment();
   var posts = [];
+
+  var getRandom = function (min, max) {
+    return Math.floor(Math.random() * (max + 1)) + min;
+  };
+
+  var randomFilter = function (data) {
+    data.forEach(function (post, index, arr) {
+      post.randomValue = getRandom(0, arr.length - 1);
+    });
+
+    data.sort(function (left, right) {
+      return left.randomValue - right.randomValue;
+    });
+    return data;
+  };
+
+  var discussFilter = function (data) {
+    data.sort(function (left, right) {
+      return left.comments.length - right.comments.length;
+    });
+    return data;
+  };
+
+  var filterMap = {
+    'filter-default': function () {
+      return posts;
+    },
+    'filter-random': randomFilter,
+    'filter-discussed': discussFilter
+  };
 
   var onErrorLoad = function (message) {
     var div = document.createElement('div');
@@ -13,17 +42,14 @@
   };
 
   var onSuccessLoad = function (data) {
-    data.forEach(function (item, index) {
-
-      var picture = window.buildPicture(item);
-
-      picture.setAttribute('data-id', index);
-
-      fragment.append(picture);
+    data.forEach(function (post, index) {
+      post.id = index;
     });
 
     posts = data.slice();
-    pictureContainer.append(fragment);
+
+    pictureContainer.append(window.getPictures(posts));
+    showFilters();
   };
 
   window.backend.load(onSuccessLoad, onErrorLoad);
@@ -36,4 +62,40 @@
     }
   });
 
+  var filterContainer = document.querySelector('.img-filters');
+  var filterForm = filterContainer.querySelector('.img-filters__form');
+
+  var showFilters = function () {
+    filterContainer.classList.remove('img-filters--inactive');
+  };
+
+  filterForm.addEventListener('click', function (evt) {
+    var selectedFilter = filterForm.querySelector('.img-filters__button--active');
+
+    if (selectedFilter !== evt.target) {
+      selectedFilter.classList.remove('img-filters__button--active');
+      selectedFilter = evt.target;
+      selectedFilter.classList.add('img-filters__button--active');
+
+      var update = window.debounce(updateGallery);
+      update(selectedFilter.getAttribute('id'));
+    }
+  });
+
+  var updateGallery = function (key) {
+    var currentPictures = pictureContainer.querySelectorAll('.picture');
+
+    currentPictures.forEach(function (picture) {
+      picture.remove();
+    });
+
+    var filtered = getFiltered(key);
+
+    pictureContainer.append(window.getPictures(filtered));
+  };
+
+  var getFiltered = function (key) {
+    var dataCopy = posts.slice();
+    return filterMap[key](dataCopy);
+  };
 })();
