@@ -21,7 +21,7 @@
 
   var discussFilter = function (data) {
     data.sort(function (left, right) {
-      return left.comments.length - right.comments.length;
+      return right.comments.length - left.comments.length;
     });
     return data;
   };

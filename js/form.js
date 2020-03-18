@@ -6,13 +6,21 @@
   var EFFECT_PREVIEW = 'effects__preview--';
   var DEFAULT_SETED = 'effects__preview--none';
 
-  // var TAGS_LIMIT = 5;
-  // var MIN_TAG_LENGTH = 1;
-  // var MAX_TAG_LENGTH = 20;
+  var FILE_TYPES = ['gif', 'jpg', 'jpeg', 'png'];
+
+  var MAX_SCALE = 100;
+  var MIN_SCALE = 25;
+  var SCALE_STEP = 25;
+  var INITIAL_SCALE = 100;
+
+  var TAGS_LIMIT = 5;
+  var MIN_TAG_LENGTH = 1;
+  var MAX_TAG_LENGTH = 20;
 
   var uploadInput = document.querySelector('#upload-file');
   var imgRedactor = document.querySelector('.img-upload__overlay');
   var closeRedactor = imgRedactor.querySelector('#upload-cancel');
+  var previewRedactor = imgRedactor.querySelector('.img-upload__preview img');
 
 
   var filtersMap = {
@@ -42,6 +50,23 @@
   };
 
   uploadInput.addEventListener('change', function () {
+    var file = uploadInput.files[0];
+    var fileName = file.name.toLowerCase();
+
+    var matches = FILE_TYPES.some(function (type) {
+      return fileName.endsWith(type);
+    });
+
+    if (matches) {
+      var reader = new FileReader();
+
+      reader.addEventListener('load', function () {
+        previewRedactor.src = reader.result;
+      });
+
+      reader.readAsDataURL(file);
+    }
+
     window.modal.open(imgRedactor);
   });
 
@@ -49,13 +74,53 @@
     window.modal.close();
   });
 
-  var resetRedactor = function () {
-    uploadInput.value = '';
-    setEffect(DEFAULT_SETED);
-    effectsContainer.elements[0].checked = true;
-    selected = effectsContainer.elements[0];
+  var scale = imgRedactor.querySelector('.scale');
+  var scaleInput = scale.querySelector('.scale__control--value');
+  var scaleToBigger = scale.querySelector('.scale__control--bigger');
+  var scaleToSmaller = scale.querySelector('.scale__control--smaller');
+
+  var setScale = function (percent) {
+    imgPreview.style.transform = 'scale(' + percent / 100 + ')';
+    scaleInput.value = percent + '%';
   };
 
+  var onScaleBig = function () {
+    var currentScale = parseInt(scaleInput.value, 10);
+
+    if (currentScale < MAX_SCALE) {
+      currentScale += SCALE_STEP;
+      setScale(currentScale);
+    }
+  };
+
+  var onScaleSmall = function () {
+    var currentScale = parseInt(scaleInput.value, 10);
+
+    if (currentScale > MIN_SCALE) {
+      currentScale -= SCALE_STEP;
+      setScale(currentScale);
+    }
+  };
+
+  scaleToBigger.addEventListener('click', onScaleBig);
+
+  scaleToSmaller.addEventListener('click', onScaleSmall);
+
+
+  var resetRedactor = function () {
+    uploadInput.value = '';
+    hashInput.value = '';
+    commentInput.value = '';
+    effectsContainer.elements[0].checked = true;
+    selected = effectsContainer.elements[0];
+    rangeContainer.classList.add('hidden');
+    setEffect(DEFAULT_SETED);
+    setLevelEffect(DEFAULT_LEVEL);
+    setScale(INITIAL_SCALE);
+  };
+
+
+  var rangeContainer = imgRedactor.querySelector('.effect-level');
   var rangeControl = imgRedactor.querySelector('.effect-level__pin');
   var effectLevelValue = imgRedactor.querySelector('.effect-level__value');
   var effectDepth = imgRedactor.querySelector('.effect-level__depth');
@@ -71,6 +136,8 @@
   var setLevelEffect = function (percent) {
     effectLevelValue.value = Math.round(percent);
     imgPreview.style.filter = filtersMap[selected.value](percent);
+    rangeControl.style.left = percent + '%';
+    effectDepth.style.width = percent + '%';
   };
 
   var seted = DEFAULT_SETED;
@@ -87,6 +154,13 @@
 
   effectsContainer.addEventListener('change', function () {
     selected = effectsContainer.querySelector('input:checked');
+
+    if (effectsContainer.elements[0] === selected) {
+      rangeContainer.classList.add('hidden');
+    } else {
+      rangeContainer.classList.remove('hidden');
+    }
+
     setEffect(selected.value);
     setLevelEffect(DEFAULT_LEVEL);
   });
@@ -103,8 +177,6 @@
 
 
       if (percent >= 0 && percent <= 100) {
-        rangeControl.style.left = percent + '%';
-        effectDepth.style.width = percent + '%';
         setLevelEffect(percent);
         startX += shift;
       }
@@ -157,46 +229,98 @@
   };
 
   var form = document.querySelector('.img-upload__form');
+  var submit = form.querySelector('.img-upload__submit');
+  var hashInput = form.querySelector('.text__hashtags');
+  var commentInput = form.querySelector('.text__description');
+  var regexp = /^[a-z0-9а-я]$/i;
 
-  form.addEventListener('submit', function (evt) {
-    evt.preventDefault();
+  submit.addEventListener('click', function (evt) {
+    hashInput.style.borderColor = 'initial';
 
-    window.backend.save(new FormData(form), onSuccessSend, onErrorSend);
-    window.modal.close();
+    var inputCustomValidation = new CustomValidation();
+    inputCustomValidation.checkValidity(hashInput);
+
+    var customValidityMessage = inputCustomValidation.getInvalidities();
+    hashInput.setCustomValidity(customValidityMessage);
+
+    if (hashInput.checkValidity()) {
+      window.backend.save(new FormData(form), onSuccessSend, onErrorSend);
+      window.modal.close();
+      evt.preventDefault();
+    } else {
+      hashInput.style.borderColor = 'red';
+    }
   });
 
+  resetRedactor();
 
-  // ///////////////////////////////////////////////////////////////////
-  // //далее идет валидация инпутов - это модуль form
+  function CustomValidation() {}
 
-  // var hashInput = imgRedactor.querySelector('.text__hashtags');
-  // var commentInput = imgRedactor.querySelector('.text__description');
+  CustomValidation.prototype = {
+    invalidities: [],
 
-  // hashInput.addEventListener('change', function () {
-  //   var hashtags = this.value.split(' ');
-  //
-  //   var validTags = hashtags.filter(function (hash, index, arr) {
-  //     hash.toLowerCase(); // хэш-теги нечувствительны к регистру
-  //
-  //     var isRepeat = arr.indexOf(hash, ++index) !== -1;// один и тот же хэш-тег не может быть использован дважды
-  //     var isBeginWithHash = hash[0] === '#';// хэш-тег начинается с символа # (решётка)
-  //     var isInLimits = MIN_TAG_LENGTH < hash.length && hash.length <= MAX_TAG_LENGTH;// хеш-тег не может состоять только из одной решётки //максимальная длина одного хэш-тега 20 символов, включая решётку
-  //
-  //     if (isRepeat) {
-  //       hashInput.setCustomValidity('один и тот же хэш-тег не может быть использован дважды');
-  //     } else if (!isBeginWithHash) {
-  //       hashInput.setCustomValidity('хэш-тег начинается с символа # (решётка)');
-  //     } else if (!isInLimits) {
-  //       hashInput.setCustomValidity('хеш-тег должен быть длинной от: ' + MIN_TAG_LENGTH + ' до: ' + MAX_TAG_LENGTH + ' символов включительно');
-  //     }
-  //
-  //     return isBeginWithHash && isInLimits && !isRepeat;
-  //   });
-  //
-  //   if (validTags > TAGS_LIMIT) { // нельзя указать больше пяти хэш-тегов;
-  //     hashInput.setCustomValidity('нельзя указать больше ' + TAGS_LIMIT + 'хэш-тегов');
-  //   }
-  // });
+    checkValidity: function (input) {
+      var isRepeat = false;
+      var isBeginWithHash = true;
+      var isInLimits = true;
+      var isInAlphabet = true;
+      this.invalidities = [];
+      var hashtags = input.value.toLowerCase().split(' ');
+
+      if (hashtags.toString()) {
+        hashtags.forEach(function (hash, index, arr) {
+
+          if (!isRepeat) {
+            isRepeat = arr.indexOf(hash, ++index) !== -1;
+          }
+
+          if (isBeginWithHash) {
+            isBeginWithHash = hash[0] === '#';
+          }
+
+          if (isInLimits) {
+            isInLimits = MIN_TAG_LENGTH < hash.length && hash.length <= MAX_TAG_LENGTH;
+          }
+
+          if (isInAlphabet) {
+            var chars = hash.split('');
+            chars.shift();
+            isInAlphabet = chars.every(function (char) {
+              return regexp.test(char);
+            });
+          }
+        });
+
+        if (isRepeat) {
+          this.addInvalidity('один и тот же хэш-тег не может быть использован дважды');
+        }
+
+        if (!isBeginWithHash) {
+          this.addInvalidity('хэш-тег должен начинается с символа # (решётка)');
+        }
+
+        if (!isInLimits) {
+          this.addInvalidity('хэш-тег не может состоять из одной решетки и быть длиннее ' + MAX_TAG_LENGTH + ' символов включая решетку');
+        }
+
+        if (!isInAlphabet) {
+          this.addInvalidity('Используются запрещенные символы');
+        }
+
+        if (hashtags.length > TAGS_LIMIT) {
+          this.addInvalidity('Максимальное количество хеш-тегов: ' + TAGS_LIMIT);
+        }
+      }
+    },
+
+    addInvalidity: function (message) {
+      this.invalidities.push(message);
+    },
+
+    getInvalidities: function () {
+      return this.invalidities.join('. \n');
+    }
+  };
 
   window.form = {
     imgRedactor: imgRedactor,

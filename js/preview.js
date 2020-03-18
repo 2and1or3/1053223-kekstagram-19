@@ -53,13 +53,13 @@
 
       lastIndex += COMMENTS_RANGE;
 
-      commentCount.classList.add('hidden');
-
       if (lastIndex >= data.comments.length) {
         commentLoader.classList.add('hidden');
         commentLoader.removeEventListener('click', showComments);
+        commentCount.firstChild.data = data.comments.length + ' из ';
       } else {
         commentLoader.classList.remove('hidden');
+        commentCount.firstChild.data = lastIndex + ' из ';
       }
     };
   };
