@@ -2,6 +2,8 @@
 
 (function () {
   var COMMENTS_RANGE = 5;
+  var IMG_WIDTH = 35;
+  var IMG_HEIGHT = 35;
   var bigPicture = document.querySelector('.big-picture');
   var bigImg = bigPicture.querySelector('.big-picture__img img');
   var bigLike = bigPicture.querySelector('.likes-count');
@@ -24,8 +26,8 @@
     img.classList.add('social__picture');
     img.src = data.avatar;
     img.alt = data.name;
-    img.width = 35;
-    img.height = 35;
+    img.width = IMG_WIDTH;
+    img.height = IMG_HEIGHT;
 
     paragraph.classList.add('social__text');
     paragraph.textContent = data.message;

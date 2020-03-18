@@ -43,7 +43,7 @@
     if (form) {
       var arr = Array.from(form.elements);
       var filtered = arr.filter(function (elem) {
-        return elem.matches('input:not([type=hidden])') &&
+        var isInput = elem.matches('input:not([type=hidden])') &&
                elem.matches('input:not([type=radio])') &&
                elem.matches('input:not([type=checkbox])') &&
                elem.matches('input:not([type=file])') &&
@@ -53,13 +53,13 @@
                elem.matches('input:not([type=number])') &&
                elem.matches('input:not([disabled])') &&
                elem.matches('input:not([readonly])') ||
-
                elem.matches('textarea');
-      });
 
-      return filtered.some(function (elem) {
-        return elem.matches(':focus');
+        var isFocus = elem.matches(':focus');
+
+        return isInput && isFocus;
       });
+      return filtered.length;
     }
 
     return false;
