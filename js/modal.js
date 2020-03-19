@@ -16,8 +16,8 @@
   function popupClose() {
     var opened = document.querySelector('.js-open');
 
-    if (opened === window.form.imgRedactor) {
-      window.form.resetRedactor();
+    if (opened === window.form.imgEditor) {
+      window.form.resetEditor();
     }
 
     opened.classList.add('hidden');

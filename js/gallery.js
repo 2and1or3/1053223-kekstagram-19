@@ -1,6 +1,7 @@
 'use strict';
 
 (function () {
+  var RANDOM_LIMIT = 10;
   var pictureContainer = document.querySelector('.pictures');
   var posts = [];
 
@@ -16,6 +17,7 @@
     data.sort(function (left, right) {
       return left.randomValue - right.randomValue;
     });
+    data = data.slice(0, RANDOM_LIMIT);
     return data;
   };
 

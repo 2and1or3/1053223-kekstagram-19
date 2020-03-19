@@ -14,6 +14,7 @@
 
   var commentCount = bigPicture.querySelector('.social__comment-count');
   var commentLoader = bigPicture.querySelector('.comments-loader');
+  var fragment = document.createDocumentFragment();
 
 
   var createComment = function (data) {
@@ -45,14 +46,13 @@
     var length = data.comments.length;
 
     return function () {
-      bigSocial.innerHTML = '';
 
       for (var i = lastIndex; (i < length) && i < (lastIndex + COMMENTS_RANGE); i++) {
         var item = createComment(data.comments[i]);
 
-        bigSocial.append(item);
+        fragment.append(item);
       }
-
+      bigSocial.append(fragment);
       lastIndex += COMMENTS_RANGE;
 
       if (lastIndex >= data.comments.length) {
@@ -71,7 +71,7 @@
     bigCaption.textContent = data.description;
     bigLike.textContent = data.likes;
     bigComment.textContent = data.comments.length;
-
+    bigSocial.innerHTML = '';
     showComments = getCommentsLoader(data);
 
     showComments();

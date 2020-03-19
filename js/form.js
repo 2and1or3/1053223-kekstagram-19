@@ -21,32 +21,32 @@
   var MAX_FILTER_HEAT = 0.02;
 
   var uploadInput = document.querySelector('#upload-file');
-  var imgRedactor = document.querySelector('.img-upload__overlay');
-  var closeRedactor = imgRedactor.querySelector('#upload-cancel');
-  var previewRedactor = imgRedactor.querySelector('.img-upload__preview img');
+  var imgEditor = document.querySelector('.img-upload__overlay');
+  var closeEditor = imgEditor.querySelector('#upload-cancel');
+  var previewEditor = imgEditor.querySelector('.img-upload__preview img');
 
 
-  var filtersMap = {
-    none: function () {
+  var FiltersMap = {
+    NONE: function () {
       return 'none';
     },
-    chrome: function (percent) {
+    CHROME: function (percent) {
       var value = Math.round(percent) / 100;
       return 'grayscale(' + value + ')';
     },
-    sepia: function (percent) {
+    SEPIA: function (percent) {
       var value = Math.round(percent) / 100;
       return 'sepia(' + value + ')';
     },
-    marvin: function (percent) {
+    MARVIN: function (percent) {
       var value = Math.round(percent);
       return 'invert(' + value + '%)';
     },
-    phobos: function (percent) {
+    PHOBOS: function (percent) {
       var value = Math.round(percent * MAX_FILTER_PHOBOS);
       return 'blur(' + value + 'px)';
     },
-    heat: function (percent) {
+    HEAT: function (percent) {
       var value = Math.round(percent * MAX_FILTER_HEAT) + 1;
       return 'brightness(' + value + ')';
     }
@@ -64,20 +64,20 @@
       var reader = new FileReader();
 
       reader.addEventListener('load', function () {
-        previewRedactor.src = reader.result;
+        previewEditor.src = reader.result;
       });
 
       reader.readAsDataURL(file);
     }
 
-    window.modal.open(imgRedactor);
+    window.modal.open(imgEditor);
   });
 
-  closeRedactor.addEventListener('click', function () {
+  closeEditor.addEventListener('click', function () {
     window.modal.close();
   });
 
-  var scale = imgRedactor.querySelector('.scale');
+  var scale = imgEditor.querySelector('.scale');
   var scaleInput = scale.querySelector('.scale__control--value');
   var scaleToBigger = scale.querySelector('.scale__control--bigger');
   var scaleToSmaller = scale.querySelector('.scale__control--smaller');
@@ -110,7 +110,7 @@
   scaleToSmaller.addEventListener('click', onScaleSmall);
 
 
-  var resetRedactor = function () {
+  var resetEditor = function () {
     uploadInput.value = '';
     hashInput.value = '';
     commentInput.value = '';
@@ -122,14 +122,14 @@
   };
 
 
-  var rangeContainer = imgRedactor.querySelector('.effect-level');
-  var rangeControl = imgRedactor.querySelector('.effect-level__pin');
-  var effectLevelValue = imgRedactor.querySelector('.effect-level__value');
-  var effectDepth = imgRedactor.querySelector('.effect-level__depth');
+  var rangeContainer = imgEditor.querySelector('.effect-level');
+  var rangeControl = imgEditor.querySelector('.effect-level__pin');
+  var effectLevelValue = imgEditor.querySelector('.effect-level__value');
+  var effectDepth = imgEditor.querySelector('.effect-level__depth');
 
-  var effectsContainer = imgRedactor.querySelector('.effects');
+  var effectsContainer = imgEditor.querySelector('.effects');
 
-  var imgPreview = imgRedactor.querySelector('.img-upload__preview img');
+  var imgPreview = imgEditor.querySelector('.img-upload__preview img');
 
   var getPercent = function (child, shift) {
     return ((child.offsetLeft + shift) / child.offsetParent.offsetWidth) * 100;
@@ -138,7 +138,7 @@
   var setLevelEffect = function (percent) {
     var selected = effectsContainer.querySelector('input:checked');
     effectLevelValue.value = Math.round(percent);
-    imgPreview.style.filter = filtersMap[selected.value](percent);
+    imgPreview.style.filter = FiltersMap[selected.value.toUpperCase()](percent);
     rangeControl.style.left = percent + '%';
     effectDepth.style.width = percent + '%';
   };
@@ -236,8 +236,15 @@
   var regNumbersAndSymbols = /^[a-z0-9а-я]$/i;
 
   submit.addEventListener('click', function (evt) {
-    hashInput.style.borderColor = 'initial';
+    if (hashInput.checkValidity()) {
+      window.backend.save(new FormData(form), onSuccessSend, onErrorSend);
+      window.modal.close();
+      evt.preventDefault();
+    }
+  });
 
+  hashInput.addEventListener('input', function () {
+    hashInput.style.borderColor = 'red';
     var inputCustomValidation = new CustomValidation();
     inputCustomValidation.checkValidity(hashInput);
 
@@ -245,15 +252,11 @@
     hashInput.setCustomValidity(customValidityMessage);
 
     if (hashInput.checkValidity()) {
-      window.backend.save(new FormData(form), onSuccessSend, onErrorSend);
-      window.modal.close();
-      evt.preventDefault();
-    } else {
-      hashInput.style.borderColor = 'red';
+      hashInput.style.borderColor = 'initial';
     }
   });
 
-  resetRedactor();
+  resetEditor();
 
   function CustomValidation() {}
 
@@ -324,7 +327,7 @@
   };
 
   window.form = {
-    imgRedactor: imgRedactor,
-    resetRedactor: resetRedactor
+    imgEditor: imgEditor,
+    resetEditor: resetEditor
   };
 })();

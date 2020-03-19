@@ -38,7 +38,7 @@
     request.send();
   };
 
-  var upload = function (data, onError, onSuccess) {
+  var upload = function (data, onSuccess, onError) {
     var request = makeRequest(onSuccess, onError);
 
     request.open('POST', POST_URL);
